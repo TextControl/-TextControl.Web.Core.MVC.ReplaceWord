@@ -1,0 +1,49 @@
+﻿@using TXTextControl.Web.MVC
+
+@{
+    var sDocument = "<html><body><p>Welcome to <strong>Text Control</strong></p><p>Press F8 on one of the highlighted words.</p><p>This sentence contains <span style=\"background-color: yellow;\">Word1</span>.</p><p>This sentence contains <span style=\"background-color: yellow;\">Word2</span>.</p><p>This sentence contains <span style=\"background-color: yellow;\">Word3</span>.</p></body></html>";
+}
+
+@Html.TXTextControl().TextControl(settings => {
+	    
+	}).LoadText(sDocument, TXTextControl.Web.StringStreamType.HTMLFormat).Render()
+
+<script>
+
+    TXTextControl.addEventListener("textControlLoaded", async function () {
+        document.addEventListener("keydown", logKey);
+
+        async function logKey(e) {
+            if (e.key === "F8") {
+                const text = await getTextFromSelection();
+                const replacedText = await replaceWord(text);
+
+                if (replacedText !== undefined) {
+                    await loadReplacedText(replacedText);
+                }
+            }
+        }
+
+        function getTextFromSelection() {
+            return new Promise(resolve => {
+                TXTextControl.selectWord(() => {
+                    TXTextControl.selection.getText(text => resolve(text));
+                });
+            });
+        }
+
+        async function loadReplacedText(replacedText) {
+            const encodedText = btoa(replacedText);
+            await TXTextControl.selection.load(TXTextControl.StreamType.HTMLFormat, encodedText);
+        }
+    });
+	
+	function replaceWord(word) {
+		return new Promise(resolve => {
+			$.get("home/replaceWord", { word: word })
+				.done(data => resolve(data))
+				.fail(() => resolve(null));
+		});
+	}
+
+</script>
